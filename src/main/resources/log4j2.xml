@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Properties>
+        <!--로그 파일 경로-->
+        <Property name="BASE_DIR">C:\GEOTWIN-LOGS</Property>
+        <!--로그 파일 이름  -->
+        <Property name="FILE_NAME">geotwin-log</Property>
+    </Properties>
+    <Appenders>
+        <!--콘솔 로그-->
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss}] [%-5p] [%c{1}:%L] - %m%n"/>
+        </Console>
+        <!--파일로 저장하는 로그 설정-->
+        <RollingFile name="file"
+                     fileName="${BASE_DIR}/${FILE_NAME}.log"
+                     filePattern="${BASE_DIR}/${FILE_NAME}.%d{yyyy-MM-dd}.log">
+            <PatternLayout pattern="%d [%t] %-5level %c(%M:%L) - %m%n" />
+            <Policies>
+                <!-- 30MB 용량이 초과시 DefaultRolloverStrategy 정책만큼 넘버링 -->
+                <SizeBasedTriggeringPolicy size="30 MB" />
+                <!-- 일별 로그 파일 생성-->
+                <TimeBasedTriggeringPolicy interval="1" modulate="true" />
+            </Policies>
+            <!-- 롤링 파일 1000개 까지 생성 -->
+            <DefaultRolloverStrategy max="1000" />
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Logger name="java.sql" level="INFO" additivity="false">
+            <AppenderRef ref="file" />
+        </Logger>
+
+        <Logger name="egovframework" level="DEBUG" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>
+
+        <Logger name="org.egovframe" level="DEBUG" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>
+
+        <Logger name="jdbc.sqltiming" level="INFO" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>
+
+        <Logger name="org.springframework" level="INFO" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>
+
+        <Logger name="com.enjoybt" level="DEBUG" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>
+
+        <logger name="jdbc.resultset" level="ERROR" additivity="false">
+            <appender-ref ref="console" />
+        </logger>
+
+        <logger name="jdbc.connection" level="ERROR" additivity="false">
+            <appender-ref ref="console" />
+        </logger>
+
+        <logger name="jdbc.audit" level="ERROR" additivity="false">
+            <appender-ref ref="console" />
+        </logger>
+
+        <logger name="org.mybatis" level="INFO" additivity="false">
+            <appender-ref ref="console" />
+        </logger>
+        <Root level="INFO">
+            <AppenderRef ref="console" />
+        </Root>
+    </Loggers>
+</Configuration>

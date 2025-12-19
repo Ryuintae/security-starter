@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<!-- //TODO Security : 시큐리티를 체크하지 않는 구역 설정 -->
+	<http pattern="/websocket/**" security="none" />
+	<http pattern="/resources/**" security="none" />
+	<http pattern="/cmm/**" security="none" />
+	<http pattern="/api/**" security="none" />
+	<http pattern="/favicon.ico" security="none" />
+<!--	<beans:bean id="securityRestController" class="com.enjoybt.framework.security.controller.SecurityRestController"/>-->
+    <beans:bean id="loginHandler" class="com.enjoybt.framework.security.LoginHandler" />
+    <beans:bean id="usernamePasswordAuthenticationFilter" class="com.enjoybt.framework.security.CustomUserNamePassword">
+        <beans:property name="authenticationManager" ref="loginHandler" />
+        <beans:property name="authenticationFailureHandler" ref="loginHandler" />
+        <beans:property name="authenticationSuccessHandler" ref="loginHandler" />
+        <beans:property name="filterProcessesUrl" value="/security/loginProcess.do" />
+        <beans:property name="usernameParameter" value="userID" />
+		<beans:property name="passwordParameter" value="password" />
+	</beans:bean>
+
+    <beans:bean id="loginUrlAuthenticationEntryPoint" class="org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint">
+    	<beans:constructor-arg name="loginFormUrl" value="/" />
+    </beans:bean>
+
+	<http auto-config="false" use-expressions="true" entry-point-ref="loginUrlAuthenticationEntryPoint">
+		<headers>
+			<frame-options policy="SAMEORIGIN" />
+		</headers>
+		<csrf disabled="true"/>
+		<access-denied-handler error-page="/code403.jsp"/>
+
+		<!-- 로그인 화면 / 루트 페이지 -->
+		<intercept-url pattern="/" access="permitAll" />
+
+		<!-- 로그인 처리 -->
+		<intercept-url pattern="/security/loginProcess.do" access="permitAll" />
+
+		<!-- 회원가입 / 중복확인 / RSA -->
+		<intercept-url pattern="/security/**" access="permitAll" />
+
+		<!-- 공용 API -->
+		<intercept-url pattern="/api/**" access="permitAll" />
+		<intercept-url pattern="/apiUsr/**" access="permitAll" />
+		<intercept-url pattern="/gov/**" access="permitAll" />
+
+		<!-- 관리자 -->
+		<intercept-url pattern="/apiMng/**" access="hasRole('ADMIN')" />
+		<intercept-url pattern="/manage/**" access="hasRole('ADMIN')" />
+		<intercept-url pattern="/gov/manage/**" access="hasAnyRole('ADMIN','GOV')" />
+
+		<!-- 그 외는 로그인 필수 -->
+		<intercept-url pattern="/**" access="hasAnyRole('ADMIN','USER','GOV')" />
+
+		<session-management>
+			<concurrency-control max-sessions="100"/>
+		</session-management>
+		<custom-filter ref="usernamePasswordAuthenticationFilter" position="FORM_LOGIN_FILTER"/>
+	</http>
+</beans:beans>

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="security">
+	<!-- 로그인용 사용자 조회 -->
+	<select id="selectUserInfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT
+			user_id,
+			user_pass,
+			user_role,
+			user_name,
+			group_name,
+			login_cnt
+		FROM user_auth."user"
+		WHERE user_id = #{userId}
+		  AND view_yn = true
+		  AND approval_yn = true
+	</select>
+
+	<!-- (선택) 아이디 중복 체크 -->
+	<select id="checkDupID" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT
+			CASE WHEN COUNT(1) = 0 THEN 'N' ELSE 'Y' END AS dup_yn
+		FROM user_auth."user"
+		WHERE user_id = #{user_id}
+	</select>
+
+	<!-- 회원가입 -->
+	<insert id="insertUserInfo" parameterType="java.util.HashMap">
+		INSERT INTO user_auth."user"(
+			user_id,
+			user_pass,
+			user_role,
+			user_name,
+			group_name,
+			sgg_nm,
+			user_tel,
+			user_addr,
+			user_addr_dt,
+			user_zcode,
+			email,
+			login_cnt,
+			reg_date,
+			view_yn,
+			region_umd_cd,
+			approval_yn
+		) VALUES (
+					 #{user_id},
+					 #{user_pass},
+					 #{user_role},
+					 #{user_name},
+					 #{group_name},
+					 #{sgg_nm},
+					 #{user_tel},
+					 #{user_addr},
+					 #{user_addr_dt},
+					 #{user_zcode},
+					 #{email},
+					 #{login_cnt},
+					 now(),
+					 #{view_yn},
+					 #{region_umd_cd},
+					 #{approval_yn}
+				 )
+	</insert>
+
+	<!-- 로그인 실패 횟수 증가 -->
+	<update id="addLoginCnt" parameterType="java.lang.String">
+		UPDATE user_auth."user"
+		SET login_cnt = login_cnt + 1
+		WHERE user_id = #{value}
+	</update>
+
+	<!-- 로그인 실패 횟수 초기화 -->
+	<update id="resetLoginCnt" parameterType="java.lang.String">
+		UPDATE user_auth."user"
+		SET login_cnt = 0
+		WHERE user_id = #{value}
+	</update>
+
+	<!-- 기존 로그 테이블 쓰면 유지  -->
+	<insert id="insertUserLog" parameterType="java.util.HashMap">
+		INSERT INTO user_auth.user_log VALUES (DEFAULT, #{userId}, #{logType}, #{logContent}, now())
+	</insert>
+
+	<insert id="insertAutoLogout">
+		WITH LOGOUT_DATA AS (
+			SELECT SUBSTR(LOG_CONTENT, 0, STRPOS(LOG_CONTENT, '로 로그')) || '로 로그인 하셨습니다.' AS COL
+			FROM user_auth.user_log
+			WHERE LOG_TYPE = 'LOGOUT'
+		)
+		INSERT INTO user_auth.user_log
+		SELECT
+			NEXTVAL('user_auth.user_log_sn_seq'::regclass),
+			USER_ID,
+			'LOGOUT' AS LOG_TYPE,
+			SUBSTR(LOG_CONTENT, 0, STRPOS(LOG_CONTENT, '로 로그'))||'로 로그아웃 하셨습니다.' AS LOG_CONTENT,
+			NOW()
+		FROM user_auth.user_log
+		WHERE
+			LOG_TYPE = 'LOGIN'
+		  AND
+			LOG_CONTENT NOT IN (SELECT COL FROM LOGOUT_DATA)
+	</insert>
+
+</mapper>

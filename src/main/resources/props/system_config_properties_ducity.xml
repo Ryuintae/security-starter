@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd" >
+<properties>
+	<entry key="SERVER_TYPE">DEV</entry>
+	
+	<!-- ducity -->
+	<entry key="DB_MAIN_POOL_NAME">DEV_MAIN_POOL</entry>
+	<entry key="DB_MAIN_DATASOURCE_CLASS_NAME">org.postgresql.ds.PGSimpleDataSource</entry>
+	<entry key="DB_MAIN_CLASS_NAME">org.postgresql.Driver</entry>
+	<entry key="DB_MAIN_URL">jdbc:postgresql://remote.enjoybt.co.kr:45433</entry>
+	<entry key="DB_MAIN_SERVER_NAME">remote.enjoybt.co.kr</entry>
+	<entry key="DB_MAIN_PORT_NUMBER">45432</entry>
+	<entry key="DB_MAIN_DB_NAME">ducity</entry>
+	<entry key="DB_MAIN_USER_NAME">ducity</entry>
+	<entry key="DB_MAIN_PASSWORD">ducity123!@#</entry>
+	<entry key="DB_MAIN_MINIMUM_IDLE">1</entry>
+	<entry key="DB_MAIN_MAXIMUM_POOL_SIZE">5</entry>
+
+	<!-- GeoServer 주소 -->
+	<entry key="GEOSERVER_IP">http://remote.enjoybt.co.kr:19101/geoserver/</entry>
+
+
+</properties>
+

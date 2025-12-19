@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0">
+
+  <display-name>Spring MVC</display-name>
+
+  <!-- Root context -->
+  <context-param>
+    <param-name>contextConfigLocation</param-name>
+    <param-value>classpath*:spring/context-root.xml</param-value>
+  </context-param>
+
+  <listener>
+    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+  </listener>
+
+  <!-- servlet context -->
+  <servlet>
+    <servlet-name>appServlet</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <init-param>
+      <param-name>contextConfigLocation</param-name>
+      <param-value>/WEB-INF/config/dispatcher-servlet.xml</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>appServlet</servlet-name>
+    <url-pattern>/</url-pattern>
+  </servlet-mapping>
+  <!-- Spring Security Filter -->
+  <filter>
+    <filter-name>springSecurityFilterChain</filter-name>
+    <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>springSecurityFilterChain</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  <!-- encoding filter -->
+  <filter>
+    <filter-name>encodingFilter</filter-name>
+    <filter-class>
+      org.springframework.web.filter.CharacterEncodingFilter
+    </filter-class>
+    <init-param>
+      <param-name>encoding</param-name>
+      <param-value>UTF-8</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>encodingFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  <filter-mapping>
+    <filter-name>encodingFilter</filter-name>
+    <url-pattern>/</url-pattern>
+  </filter-mapping>
+  <!-- 세션을 쿠키 전용으로 관리 -->
+  <session-config>
+    <tracking-mode>COOKIE</tracking-mode>
+  </session-config>
+
+  <error-page>
+    <error-code>404</error-code>
+    <location>/code404.jsp</location>
+  </error-page>
+  <error-page>
+    <error-code>400</error-code>
+    <location>/code400.jsp</location>
+  </error-page>
+  <error-page>
+    <error-code>500</error-code>
+    <location>/code500.jsp</location>
+  </error-page>
+  <error-page>
+    <error-code>403</error-code>
+    <location>/code403.jsp</location>
+  </error-page>
+  <error-page>
+    <error-code>405</error-code>
+    <location>/code405.jsp</location>
+  </error-page>
+  <error-page>
+    <error-code>415</error-code>
+    <location>/code415.jsp</location>
+  </error-page>
+  <error-page>
+    <exception-type>java.lang.Throwable</exception-type>
+    <location>/code500.jsp</location>
+  </error-page>
+
+
+</web-app>

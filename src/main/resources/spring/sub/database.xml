@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
+
+
+	<bean id="mainDataSourceSpied" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
+		<property name="poolName" value="#{sysConfig['DB_MAIN_POOL_NAME']}"/>
+		<property name="dataSourceClassName" value="#{sysConfig['DB_MAIN_DATASOURCE_CLASS_NAME']}"/>
+		<property name="minimumIdle" value="#{sysConfig['DB_MAIN_MINIMUM_IDLE']}"/>
+		<property name="maximumPoolSize" value="#{sysConfig['DB_MAIN_MAXIMUM_POOL_SIZE']}"/>
+		<property name="dataSourceProperties">
+			<props>
+				<prop key="databaseName">#{sysConfig['DB_MAIN_DB_NAME']}</prop>
+				<prop key="user">#{sysConfig['DB_MAIN_USER_NAME']}</prop>
+				<prop key="password">#{sysConfig['DB_MAIN_PASSWORD']}</prop>
+				<prop key="serverName">#{sysConfig['DB_MAIN_SERVER_NAME']}</prop>
+				<prop key="portNumber">#{sysConfig['DB_MAIN_PORT_NUMBER']}</prop>
+			</props>
+		</property>
+	</bean>
+
+	<bean id="mainDataSource" class="net.sf.log4jdbc.Log4jdbcProxyDataSource">
+		<constructor-arg ref="mainDataSourceSpied" />
+		<property name="logFormatter">
+			<bean class="net.sf.log4jdbc.tools.Log4JdbcCustomFormatter">
+				<property name="loggingType" value="MULTI_LINE" />
+				<property name="sqlPrefix" value="SQL:::&#10;&#9;&#9;"/>
+			</bean>
+		</property>
+	</bean>
+
+	<!-- mainSqlSession -->
+		<bean id="mainSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="mainDataSource" />
+		</bean>
+
+	<bean id="mainSqlSession" class="org.mybatis.spring.SqlSessionTemplate" destroy-method="clearCache">
+		<constructor-arg ref="mainSqlSessionFactory" />
+	</bean>
+
+
+	<bean id="subDataSourceSpied" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
+		<property name="poolName" value="#{subConfig['DB_MAIN_POOL_NAME']}"/>
+		<property name="dataSourceClassName" value="#{subConfig['DB_MAIN_DATASOURCE_CLASS_NAME']}"/>
+		<property name="minimumIdle" value="#{subConfig['DB_MAIN_MINIMUM_IDLE']}"/>
+		<property name="maximumPoolSize" value="#{subConfig['DB_MAIN_MAXIMUM_POOL_SIZE']}"/>
+		<property name="dataSourceProperties">
+			<props>
+				<prop key="databaseName">#{subConfig['DB_MAIN_DB_NAME']}</prop>
+				<prop key="user">#{subConfig['DB_MAIN_USER_NAME']}</prop>
+				<prop key="password">#{subConfig['DB_MAIN_PASSWORD']}</prop>
+				<prop key="serverName">#{subConfig['DB_MAIN_SERVER_NAME']}</prop>
+				<prop key="portNumber">#{subConfig['DB_MAIN_PORT_NUMBER']}</prop>
+			</props>
+		</property>
+	</bean>
+
+	<bean id="subDataSource" class="net.sf.log4jdbc.Log4jdbcProxyDataSource">
+		<constructor-arg ref="subDataSourceSpied" />
+		<property name="logFormatter">
+			<bean class="net.sf.log4jdbc.tools.Log4JdbcCustomFormatter">
+				<property name="loggingType" value="MULTI_LINE" />
+				<property name="sqlPrefix" value="SQL:::&#10;&#9;&#9;"/>
+			</bean>
+		</property>
+	</bean>
+
+	<!-- subSqlSession -->
+	<bean id="subSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="subDataSource" />
+		<property name="mapperLocations">
+			<list>
+				<value>classpath:/mapper/pg_main_security_mapper.xml</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="subSqlSession" class="org.mybatis.spring.SqlSessionTemplate" destroy-method="clearCache">
+		<constructor-arg ref="subSqlSessionFactory" />
+	</bean>
+
+	<bean id="subDAO" class="com.enjoybt.framework.database.CommonDAO" p:sqlSessionTemplate-ref="subSqlSession"></bean>
+</beans>
