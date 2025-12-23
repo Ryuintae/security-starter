@@ -1,13 +1,13 @@
 package com.enjoybt.framework.security.controller;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
  *  Description : 사용자 세션/로그인 관련 페이지 컨트롤러
  */
 @Controller
-@RequestMapping(value="/security/")
 public class SecurityController {
 	
 	/**
@@ -18,7 +18,10 @@ public class SecurityController {
 	public String viewLoginPage() {
 		return "security/login";
 	}
-
+	@GetMapping({"/"})
+	public String home() {
+		return "index";
+	}
 	@RequestMapping(value="signup.do")
 	public String viewSignupPage() {
 		return "security/signup";

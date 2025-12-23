@@ -1,0 +1,161 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<c:set var="ctx" value="${pageContext.request.contextPath}"/>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
+
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>EnjoyBT - Security</title>
+
+    <script>
+        window.CTX = "${ctx}";
+    </script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="${ctx}/resources/css/auth.css"/>
+
+    <!-- RSA libs -->
+    <script src="${ctx}/resources/js/lib/rsa/jsbn.js" defer></script>
+    <script src="${ctx}/resources/js/lib/rsa/rsa.js" defer></script>
+    <script src="${ctx}/resources/js/lib/rsa/prng4.js" defer></script>
+    <script src="${ctx}/resources/js/lib/rsa/rng.js" defer></script>
+
+    <!-- App scripts -->
+    <script src="${ctx}/resources/js/user/auth_fetch.js" defer></script>
+    <script src="${ctx}/resources/js/user/auth.js" defer></script>
+</head>
+<body>
+
+<!-- 상단바: 초기에는 로그인 버튼만 노출 -->
+<header class="topbar">
+    <div class="topbar-inner">
+        <div class="topbar-right">
+            <sec:authorize access="isAuthenticated()">
+        <span class="welcome">
+            <sec:authentication property="name"/>님 환영합니다.
+        </span>
+            </sec:authorize>
+
+            <sec:authorize access="isAnonymous()">
+                <button id="btnOpenLogin" type="button" class="btn btn--primary">로그인</button>
+            </sec:authorize>
+        </div>
+    </div>
+</header>
+
+<div class="app">
+    <section class="hero">
+        <div class="hero-card">
+            <h2 class="hero-title">Security Starter</h2>
+            <p class="hero-desc">
+                사내 서비스에서 공통으로 사용하는 RSA 기반 통합 로그인 인증 서비스입니다.
+            </p>
+
+            <div class="hero-readme">
+                <div class="hero-row">
+                    <span class="hero-tag">Login</span>
+                    <p class="hero-text">
+                        로그인 시 서버에서 RSA 공개키를 발급받고, 비밀번호를 암호화하여 Spring Security 로그인 필터(/security/loginProcess.do)로 전송합니다.
+                    </p>
+                </div>
+
+                <div class="hero-row">
+                    <span class="hero-tag">Signup</span>
+                    <p class="hero-text">
+                        회원가입은 아이디 중복확인 후, 동일하게 RSA로 비밀번호를 암호화하여 /security/signup.do 로 전송합니다.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Backdrop -->
+<div id="backdrop" class="backdrop"></div>
+
+<!-- (권장) Spring Security 로그인 처리용 hidden form
+     filterProcessesUrl="/security/loginProcess.do"
+     usernameParameter="userID"
+     passwordParameter="password"
+-->
+<form id="loginForm" method="post" action="<%=request.getContextPath()%>/security/loginProcess.do">
+    <input type="hidden" name="userID" value=""/>
+    <input type="hidden" name="password" value=""/>
+</form>
+
+<!-- Login Modal -->
+<div id="loginModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+    <div class="modal-header">
+        <h2 id="loginTitle">로그인</h2>
+        <button type="button" class="modal-close" data-close="true">×</button>
+    </div>
+
+    <div class="modal-body">
+        <div class="field">
+            <label for="loginUserId">아이디</label>
+            <input id="loginUserId" type="text" autocomplete="username"/>
+        </div>
+
+        <div class="field">
+            <label for="loginUserPw">비밀번호</label>
+            <input id="loginUserPw" type="password" autocomplete="current-password"/>
+        </div>
+
+        <div class="actions">
+            <button id="btnLogin" type="button" class="btn btn--primary">로그인</button>
+        </div>
+
+        <p class="switch">
+            계정이 없으신가요?
+            <button type="button" class="link" id="goSignup">회원가입</button>
+        </p>
+
+        <div id="loginMsg" class="msg" aria-live="polite"></div>
+    </div>
+</div>
+
+<!-- Signup Modal -->
+<div id="signupModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="signupTitle">
+    <div class="modal-header">
+        <h2 id="signupTitle">회원가입</h2>
+        <button type="button" class="modal-close" data-close="true">×</button>
+    </div>
+
+    <div class="modal-body">
+        <div class="field">
+            <label for="signupUserId">아이디</label>
+            <div class="row">
+                <input id="signupUserId" type="text" autocomplete="username"/>
+                <button id="btnDupCheck" type="button" class="btn">중복확인</button>
+            </div>
+            <div id="dupMsg" class="hint" aria-live="polite"></div>
+        </div>
+
+        <div class="field">
+            <label for="signupUserPw">비밀번호</label>
+            <input id="signupUserPw" type="password" autocomplete="new-password"/>
+        </div>
+
+        <div class="field">
+            <label for="signupUserName">이름</label>
+            <input id="signupUserName" type="text"/>
+        </div>
+
+        <div class="actions">
+            <button id="btnSignup" type="button" class="btn btn--primary">가입하기</button>
+        </div>
+
+        <p class="switch">
+            이미 계정이 있으신가요?
+            <button type="button" class="link" id="goLogin">로그인</button>
+        </p>
+
+        <div id="signupMsg" class="msg" aria-live="polite"></div>
+    </div>
+</div>
+
+</body>
+</html>
