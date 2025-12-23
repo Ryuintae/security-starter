@@ -143,8 +143,8 @@ public class LoginHandler implements AuthenticationSuccessHandler, Authenticatio
             Map<String, Object> param = new HashMap<String, Object>();
             param.put("userId", userId);
             param.put("logType", "LOGIN");
-            String content = "세션 ID("+session.getId() + ")로 로그인 하셨습니다.";
-            param.put("logContent", content);
+			String content = "LOGIN success (session=" + session.getId() + ")";
+			param.put("logContent", content);
 
             sqlSession.update("security.resetLoginCnt", userId);
             sqlSession.insert("security.insertUserLog", param);
@@ -163,31 +163,37 @@ public class LoginHandler implements AuthenticationSuccessHandler, Authenticatio
 	 * @throws ServletException
 	 */
 	@Override
-	public void onAuthenticationFailure(final HttpServletRequest request, final HttpServletResponse response, final AuthenticationException exception)
+	public void onAuthenticationFailure(final HttpServletRequest request,
+										final HttpServletResponse response,
+										final AuthenticationException exception)
 			throws IOException, ServletException {
-		//TODO Security : 로그인 실패시 처리하기 위한 메서드
-		String logValue = "into Login Fail : " + exception.getMessage();
-		if(LOGGER.isDebugEnabled()) {
-			LOGGER.debug(logValue);
+
+		String raw = (exception.getMessage() == null) ? "" : exception.getMessage();
+		String errMsg = raw.split(":")[0];
+
+		// UI에서 처리할 에러 코드
+		String loginError;
+
+		if (errMsg.contains(Constants.LOGIN_FAILURE_NO_USER)) {
+			loginError = "NO_USER";
+		} else if (errMsg.contains(Constants.LOGIN_FAILURE_NO_MATCH_PASSWORD)) {
+			loginError = "BAD_CREDENTIALS";
+		} else if (errMsg.contains(Constants.LOGIN_FAILURE_OVER_ATTEMPT_COUNT)) {
+			loginError = "LOCKED";
+		} else {
+			loginError = "FAIL";
 		}
-		String errMsg = exception.getMessage().split(":")[0];
-		
-		StringBuffer reqUrl = new StringBuffer(19);
-		reqUrl.append(request.getContextPath());
-		reqUrl.append( "/security/loginFail.do");
-		
-		
-		if(errMsg.indexOf(Constants.LOGIN_FAILURE_NO_USER) != -1) {
-			reqUrl.append( "?error=");
-			reqUrl.append( Constants.LOGIN_FAILURE_NO_USER);
-		}else if(errMsg.indexOf(Constants.LOGIN_FAILURE_NO_MATCH_PASSWORD) != -1) {
-			reqUrl.append( "?error=");
-			reqUrl.append( errMsg);
-		}else if(errMsg.indexOf(Constants.LOGIN_FAILURE_OVER_ATTEMPT_COUNT) != -1) {
-			reqUrl.append( "?error=");
-			reqUrl.append( errMsg);
+
+		// 로그인 모달이 있는 페이지로 다시 보낸다.
+		String redirectUrl = request.getContextPath() + (mainPage == null || mainPage.isEmpty() ? "/" : mainPage);
+
+		if (redirectUrl.contains("?")) {
+			redirectUrl += "&loginError=" + loginError;
+		} else {
+			redirectUrl += "?loginError=" + loginError;
 		}
-		
-		response.sendRedirect(reqUrl.toString());
+
+		response.sendRedirect(redirectUrl);
 	}
+
 }

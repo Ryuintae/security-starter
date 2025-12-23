@@ -109,4 +109,28 @@
 		  AND view_yn = true
 		  AND approval_yn = true
 	</update>
+
+	<select id="selectSidoList" resultType="java.util.HashMap">
+		SELECT DISTINCT
+			sido_cd, sido_nm
+		FROM user_auth.region_code_202406
+		ORDER BY sido_cd
+	</select>
+
+	<select id="selectSigunguList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT DISTINCT
+			sigungu_cd, sigungu_nm
+		FROM user_auth.region_code_202406
+		WHERE sido_cd = #{sido_cd}
+		ORDER BY sigungu_cd
+	</select>
+
+	<select id="selectUmdList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT DISTINCT
+			umd_cd, umd_nm
+		FROM user_auth.region_code_202406
+		WHERE sido_cd = #{sido_cd}
+		  AND sigungu_cd = #{sigungu_cd}
+		ORDER BY umd_cd
+	</select>
 </mapper>

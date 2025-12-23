@@ -12,7 +12,7 @@
 	<http pattern="/resources/**" security="none" />
 	<http pattern="/cmm/**" security="none" />
 	<http pattern="/api/**" security="none" />
-	<http pattern="/favicon.ico" security="none" />
+<!--	<http pattern="/favicon.ico" security="none" />-->
 
 	<!-- 정적 리소스 예외 추가 -->
 	<http pattern="/css/**" security="none" />

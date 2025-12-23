@@ -104,4 +104,23 @@ public class SecurityServiceImpl implements SecurityService {
 
         sqlSession.update(SECURITY_MAPPER + "updateUserPassword", p);
     }
+    @Override
+    public List<Map<String, Object>> selectSidoList() throws Exception {
+        return sqlSession.selectList(SECURITY_MAPPER + "selectSidoList");
+    }
+
+    @Override
+    public List<Map<String, Object>> selectSigunguList(String sidoCd) throws Exception {
+        Map<String, Object> p = new HashMap<>();
+        p.put("sido_cd", sidoCd);
+        return sqlSession.selectList(SECURITY_MAPPER + "selectSigunguList", p);
+    }
+
+    @Override
+    public List<Map<String, Object>> selectUmdList(String sidoCd, String sigunguCd) throws Exception {
+        Map<String, Object> p = new HashMap<>();
+        p.put("sido_cd", sidoCd);
+        p.put("sigungu_cd", sigunguCd);
+        return sqlSession.selectList(SECURITY_MAPPER + "selectUmdList", p);
+    }
 }

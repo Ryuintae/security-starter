@@ -12,6 +12,7 @@
 
     <script>
         window.CTX = "${ctx}";
+        window.LOGIN_ERROR = "${param.loginError}";
     </script>
 
     <!-- CSS -->
@@ -128,7 +129,7 @@
 
     <div class="modal-body">
         <div class="field">
-            <label for="signupUserId">아이디</label>
+            <label for="signupUserId">아이디 <span class="req">*</span></label>
             <div class="row">
                 <input id="signupUserId" type="text" autocomplete="username"/>
                 <button id="btnDupCheck" type="button" class="btn">중복확인</button>
@@ -137,13 +138,59 @@
         </div>
 
         <div class="field">
-            <label for="signupUserPw">비밀번호</label>
+            <label for="signupUserPw">비밀번호 <span class="req">*</span></label>
             <input id="signupUserPw" type="password" autocomplete="new-password"/>
         </div>
 
         <div class="field">
-            <label for="signupUserName">이름</label>
+            <label for="signupUserName">이름 <span class="req">*</span></label>
             <input id="signupUserName" type="text"/>
+        </div>
+
+        <div class="field">
+            <label for="signupEmail">이메일</label>
+            <input id="signupEmail" type="email" autocomplete="email"/>
+        </div>
+
+        <div class="field">
+            <label for="signupUserTel">전화번호</label>
+            <input id="signupUserTel" type="tel" placeholder="010-1234-5678"/>
+        </div>
+
+        <div class="field">
+            <label for="signupGroupName">소속 기관명</label>
+            <input id="signupGroupName" type="text"/>
+        </div>
+
+        <div class="field">
+            <label>지역 선택</label>
+            <div class="row">
+                <select id="selSido" class="select">
+                    <option value="">시/도 선택</option>
+                </select>
+                <select id="selSigungu" class="select" disabled>
+                    <option value="">시/군/구 선택</option>
+                </select>
+                <select id="selUmd" class="select" disabled>
+                    <option value="">읍/면/동 선택</option>
+                </select>
+            </div>
+            <div class="hint">선택 시 읍면동 코드가 저장됩니다.</div>
+        </div>
+
+        <div class="field">
+            <label for="signupAddr">주소</label>
+            <input id="signupAddr" type="text" placeholder="기본 주소"/>
+        </div>
+
+        <div class="field">
+            <label for="signupAddrDt">상세주소</label>
+            <input id="signupAddrDt" type="text" placeholder="상세 주소"/>
+        </div>
+
+        <div class="field">
+            <label for="signupZcode">우편번호</label>
+            <input id="signupZcode" type="text"/>
         </div>
 
         <div class="actions">

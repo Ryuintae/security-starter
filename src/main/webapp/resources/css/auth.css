@@ -87,6 +87,8 @@ body {
     box-shadow: 0 24px 60px rgba(0,0,0,0.2);
     display: none;
     z-index: 9999;
+    max-height: calc(100vh - 32px);
+    overflow: hidden;
 }
 .modal.is-open { display: block; }
 
@@ -112,8 +114,11 @@ body {
     line-height: 1;
 }
 
-.modal-body { padding: 16px; }
-
+.modal-body{
+    padding: 16px;
+    overflow: auto;
+    max-height: calc(100vh - 32px - 56px);
+}
 /* 폼 */
 .field { margin-bottom: 12px; }
 .field label {
@@ -153,6 +158,9 @@ body {
     font-size: 13px;
     color: #666;
 }
+/* 중복확인 상태 색상 */
+.hint.ok { color: #16a34a; font-weight: 700; }
+.hint.err { color: #dc2626; font-weight: 700; }
 
 /* 메시지 */
 .msg {
@@ -233,3 +241,13 @@ body {
     font-size: 12px;
     line-height: 1.5;
 }
+.select{
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    outline: none;
+    font-size: 14px;
+    background: #fff;
+}
+.req { color:#dc2626; font-weight:700; margin-left:4px; }

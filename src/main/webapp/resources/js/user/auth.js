@@ -1,50 +1,53 @@
+/* =========================
+ * auth.js (UI 전용)
+ * - DOM 접근/이벤트 바인딩/모달 제어
+ * - API 호출은 window.SECURITY_API만 사용
+ * - RSA 발급은 "액션 직전" (login/signup/changePw)마다 수행
+ * ========================= */
 (function () {
-    const CTX = (window.CTX || "").replace(/\/+$/, "");
+    const api = window.SECURITY_API;
+    const CTX = api?.CTX || (window.CTX || "").replace(/\/+$/, "");
     const $ = (id) => document.getElementById(id);
 
-    const btnOpenLogin = $("btnOpenLogin");
-
+    // ===== DOM
     const backdrop = $("backdrop");
+
     const loginModal = $("loginModal");
     const signupModal = $("signupModal");
+    const changePwModal = $("changePwModal");
+
+    const btnOpenLogin = $("btnOpenLogin");
+    const btnLogout = $("btnLogout");
 
     const loginMsg = $("loginMsg");
     const signupMsg = $("signupMsg");
     const dupMsg = $("dupMsg");
-
-    const btnOpenChangePw = $("btnOpenChangePw");
-    const changePwModal = $("changePwModal");
     const changePwMsg = $("changePwMsg");
 
-    const loginForm = document.getElementById("loginForm");
+    const btnOpenChangePw = $("btnOpenChangePw");
+    const loginForm = $("loginForm");
 
-    let rsaPublicM = null;
-    let rsaPublicE = null;
+    // region selects
+    const selSido = $("selSido");
+    const selSigungu = $("selSigungu");
+    const selUmd = $("selUmd");
+
+    // ===== state
     let dupOk = false;
 
-    function openModal(modalEl) {
-        if (backdrop) backdrop.classList.add("is-open");
-        if (modalEl) modalEl.classList.add("is-open");
+    // ===== modal helpers
+    function openModal(modalEl){
+        document.body.classList.add("modal-open");
+        backdrop?.classList.add("is-open");
+        modalEl?.classList.add("is-open");
     }
 
-    function closeAll() {
-        if (backdrop) backdrop.classList.remove("is-open");
-        if (loginModal) loginModal.classList.remove("is-open");
-        if (signupModal) signupModal.classList.remove("is-open");
-        if (changePwModal) changePwModal.classList.remove("is-open");
-    }
-
-    function showLogin() {
-        if (signupMsg) signupMsg.textContent = "";
-        if (dupMsg) dupMsg.textContent = "";
-        if (signupModal) signupModal.classList.remove("is-open");
-        openModal(loginModal);
-    }
-
-    function showSignup() {
-        if (loginMsg) loginMsg.textContent = "";
-        if (loginModal) loginModal.classList.remove("is-open");
-        openModal(signupModal);
+    function closeAll(){
+        document.body.classList.remove("modal-open");
+        backdrop?.classList.remove("is-open");
+        loginModal?.classList.remove("is-open");
+        signupModal?.classList.remove("is-open");
+        changePwModal?.classList.remove("is-open");
     }
 
     function setMsg(el, text, ok) {
@@ -54,75 +57,118 @@
         if (text) el.classList.add(ok ? "ok" : "err");
     }
 
-    // ========== fetch helpers
-    async function postNoBody(url) {
-        const res = await fetch(url, { method: "POST" });
-        return await res.json();
-    }
-
-    async function postJson(url, body) {
-        const res = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json;charset=UTF-8" },
-            body: JSON.stringify(body ?? {})
-        });
-        return await res.json();
-    }
-
-    // ========== RSA key load
-    async function loadRsaKey() {
-        try {
-            // SecurityRestController는 param이 없어도 되므로 body 없이 POST가 더 안전
-            const data = await postNoBody(CTX + "/security/getPasswordEncoder.do");
-
-            // 프로젝트별로 result/RESULT가 다를 수 있어 publicM/publicE로 판단
-            if (data && data.publicM && data.publicE) {
-                rsaPublicM = data.publicM;
-                rsaPublicE = data.publicE;
-                return true;
-            }
-            return false;
-        } catch (e) {
-            return false;
-        }
-    }
-
-    function encryptPassword(raw) {
-        if (!raw) return "";
-
-        if (!rsaPublicM || !rsaPublicE) {
-            throw new Error("RSA public key not loaded");
-        }
-        if (typeof RSAKey === "undefined") {
-            throw new Error("RSAKey is not defined. RSA 라이브러리를 auth.js보다 먼저 include 하세요.");
-        }
-
-        const rsa = new RSAKey();
-        rsa.setPublic(rsaPublicM, rsaPublicE);
-        const enc = rsa.encrypt(raw);
-
-        if (!enc) throw new Error("RSA encrypt failed");
-        return enc;
-    }
-
     function setDupOk(ok, message) {
         dupOk = !!ok;
-        if (dupMsg) {
-            dupMsg.textContent = message || "";
-            dupMsg.setAttribute("data-ok", ok ? "Y" : "N");
-        }
+        if (!dupMsg) return;
+
+        dupMsg.textContent = message || "";
+        dupMsg.setAttribute("data-ok", ok ? "Y" : "N");
+
+        dupMsg.classList.remove("ok", "err");
+        if (message) dupMsg.classList.add(ok ? "ok" : "err");
     }
 
-    // ========== handlers
-    async function onClickOpenLogin() {
-        // 모달 열기 전에 RSA 키가 없으면 로드 (선택)
-        if (!rsaPublicM || !rsaPublicE) {
-            const ok = await loadRsaKey();
-            if (!ok) {
-                setMsg(loginMsg, "RSA 키 발급에 실패했습니다.", false);
-            }
-        }
+    function showLogin() {
+        setMsg(signupMsg, "", true);
+        setDupOk(false, "");
+        signupModal?.classList.remove("is-open");
         openModal(loginModal);
+        $("loginUserId")?.focus();
+    }
+
+    async function showSignup() {
+        setMsg(loginMsg, "", true);
+        loginModal?.classList.remove("is-open");
+        openModal(signupModal);
+        $("signupUserId")?.focus();
+        await loadSido().catch(console.error);
+    }
+
+    function showChangePw() {
+        setMsg(changePwMsg, "", true);
+        if ($("curPw")) $("curPw").value = "";
+        if ($("newPw")) $("newPw").value = "";
+        if ($("newPw2")) $("newPw2").value = "";
+        openModal(changePwModal);
+        $("curPw")?.focus();
+    }
+
+    // ===== RSA helper
+    async function encryptOnce(rawPassword) {
+        const { publicM, publicE } = await api.fetchRsaKey(); // 세션에 privateKey 세팅
+        return api.encryptWithRsa(publicM, publicE, rawPassword);
+    }
+
+    // ===== region UI loaders
+    async function loadSido() {
+        if (!selSido) return;
+
+        selSido.innerHTML = `<option value="">시/도 선택</option>`;
+        if (selSigungu) {
+            selSigungu.innerHTML = `<option value="">시/군/구 선택</option>`;
+            selSigungu.disabled = true;
+        }
+        if (selUmd) {
+            selUmd.innerHTML = `<option value="">읍/면/동 선택</option>`;
+            selUmd.disabled = true;
+        }
+
+        const data = await api.regionSido();
+        const list = data?.list || [];
+        list.forEach((r) => {
+            const opt = document.createElement("option");
+            opt.value = String(r.sido_cd).trim();
+            opt.textContent = String(r.sido_nm ?? "").trim();
+            selSido.appendChild(opt);
+        });
+    }
+
+    async function loadSigungu(sidoCd) {
+        if (!selSigungu) return;
+
+        selSigungu.innerHTML = `<option value="">시/군/구 선택</option>`;
+        selSigungu.disabled = true;
+        if (selUmd) {
+            selUmd.innerHTML = `<option value="">읍/면/동 선택</option>`;
+            selUmd.disabled = true;
+        }
+
+        if (!sidoCd) return;
+
+        const data = await api.regionSigungu(sidoCd);
+        const list = data?.list || [];
+        list.forEach((r) => {
+            const opt = document.createElement("option");
+            opt.value = String(r.sigungu_cd).trim();
+            opt.textContent = String(r.sigungu_nm ?? "").trim();
+            selSigungu.appendChild(opt);
+        });
+        selSigungu.disabled = false;
+    }
+
+    async function loadUmd(sidoCd, sigunguCd) {
+        if (!selUmd) return;
+
+        selUmd.innerHTML = `<option value="">읍/면/동 선택</option>`;
+        selUmd.disabled = true;
+
+        if (!sidoCd || !sigunguCd) return;
+
+        const data = await api.regionUmd(sidoCd, sigunguCd);
+        const list = data?.list || [];
+        list.forEach((r) => {
+            const opt = document.createElement("option");
+            opt.value = String(r.umd_cd).trim();
+            opt.textContent = String(r.umd_nm ?? "").trim();
+            selUmd.appendChild(opt);
+        });
+        selUmd.disabled = false;
+    }
+
+    // ===== handlers
+    function onClickOpenLogin() {
+        openModal(loginModal);
+        $("loginUserId")?.focus();
     }
 
     async function onDupCheck() {
@@ -133,16 +179,12 @@
         }
 
         try {
-            const data = await postJson(CTX + "/security/checkDuplicateID.do", { user_id: userId });
+            const data = await api.checkDuplicateId(userId);
+            const dup = String(data?.dup_yn || "").trim().toUpperCase();
 
-            // 응답: { dup_yn: 'Y'/'N', result or RESULT ... }
-            const dup = (data?.dup_yn || "").toString().trim().toUpperCase();
-
-            if (dup === "N") {
-                setDupOk(true, "사용 가능한 아이디입니다.");
-            } else if (dup === "Y") {
-                setDupOk(false, "이미 사용 중인 아이디입니다.");
-            } else {
+            if (dup === "N") setDupOk(true, "사용 가능한 아이디입니다.");
+            else if (dup === "Y") setDupOk(false, "이미 사용 중인 아이디입니다.");
+            else {
                 setDupOk(false, "중복 확인 응답 오류");
                 console.error("Unexpected dup response:", data);
             }
@@ -157,6 +199,18 @@
         const userPw = (($("signupUserPw")?.value) || "").trim();
         const userName = (($("signupUserName")?.value) || "").trim();
 
+        const email = (($("signupEmail")?.value) || "").trim();
+        const userTel = (($("signupUserTel")?.value) || "").trim();
+        const groupName = (($("signupGroupName")?.value) || "").trim();
+        const userAddr = (($("signupAddr")?.value) || "").trim();
+        const userAddrDt = (($("signupAddrDt")?.value) || "").trim();
+        const userZcode = (($("signupZcode")?.value) || "").trim();
+
+        const sidoCd = (selSido?.value || "").trim();
+        const sigunguCd = (selSigungu?.value || "").trim();
+        const umdCd = (selUmd?.value || "").trim();
+        const regionUmdCd = umdCd || null; // 예: '660'
+
         if (!userId || !userPw || !userName) {
             setMsg(signupMsg, "아이디/비밀번호/이름을 모두 입력하세요.", false);
             return;
@@ -167,31 +221,40 @@
         }
 
         try {
-            if (!rsaPublicM || !rsaPublicE) {
-                const ok = await loadRsaKey();
-                if (!ok) {
-                    setMsg(signupMsg, "RSA 키 요청 실패", false);
-                    return;
-                }
-            }
+            // 액션 직전 키 발급 + 암호화
+            const encPw = await encryptOnce(userPw);
+            const selSigungu = $("selSigungu");
 
-            const encPw = encryptPassword(userPw);
+            // 시군구명 지역 추가
+            const sigunguNm = selSigungu?.selectedIndex > 0
+                ? selSigungu.options[selSigungu.selectedIndex].textContent.trim()
+                : null;
+
+            const sidoCd = (($("selSido")?.value) || "").trim();       // "11"
+            const sigunguCd = (($("selSigungu")?.value) || "").trim(); // "250"
+            const umdCd = (($("selUmd")?.value) || "").trim();         // "660"
+
+            // 8자리 생성
+            const regionUmdCd = (sidoCd && sigunguCd && umdCd)
+                ? `${sidoCd}${sigunguCd}${umdCd}`   // "11250660"
+                : null;
 
             const payload = {
                 user_id: userId,
                 user_pass: encPw,
                 user_name: userName,
-                group_name: null,
-                sgg_nm: null,
-                user_tel: null,
-                user_addr: null,
-                user_addr_dt: null,
-                user_zcode: null,
-                email: null,
-                region_umd_cd: null
+
+                group_name: groupName || null,
+                user_tel: userTel || null,
+                user_addr: userAddr || null,
+                user_addr_dt: userAddrDt || null,
+                user_zcode: userZcode || null,
+                email: email || null,
+                sgg_nm: sigunguNm,
+                region_umd_cd: regionUmdCd,
             };
 
-            const data = await postJson(CTX + "/security/signup.do", payload);
+            const data = await api.signup(payload);
 
             const ok =
                 (data?.result && String(data.result).toLowerCase() === "success") ||
@@ -226,22 +289,11 @@
         }
 
         try {
-            if (!rsaPublicM || !rsaPublicE) {
-                const ok = await loadRsaKey();
-                if (!ok) {
-                    setMsg(loginMsg, "RSA 키 요청 실패", false);
-                    return;
-                }
-            }
+            // 키 발급 + 암호화
+            const encPw = await encryptOnce(pw);
 
-            const encPw = encryptPassword(pw);
-
-            // Spring Security custom filter:
-            // filterProcessesUrl="/security/loginProcess.do"
-            // usernameParameter="userID"
-            // passwordParameter="password"
             if (!loginForm) {
-                setMsg(loginMsg, "loginForm이 없습니다. index.jsp에 hidden form을 추가하세요.", false);
+                setMsg(loginMsg, "loginForm이 없습니다. hidden form 구성이 필요합니다.", false);
                 return;
             }
 
@@ -261,26 +313,6 @@
             console.error(e);
         }
     }
-    async function onLogout() {
-        // Spring Security logout-url
-        try {
-            await fetch(CTX + "/security/logout.do", { method: "POST", credentials: "same-origin" });
-            location.href = CTX + "/"; // 로그아웃 성공 후 루트
-        } catch (e) {
-            console.error(e);
-            location.href = CTX + "/"; // 실패해도 이동
-        }
-    }
-    function showChangePw() {
-        // 메시지/입력 초기화
-        if (changePwMsg) changePwMsg.textContent = "";
-        $("curPw") && ($("curPw").value = "");
-        $("newPw") && ($("newPw").value = "");
-        $("newPw2") && ($("newPw2").value = "");
-
-        openModal(changePwModal);
-        $("curPw")?.focus();
-    }
 
     async function onChangePassword() {
         const cur = (($("curPw")?.value) || "").trim();
@@ -289,10 +321,6 @@
 
         if (!cur || !nw1 || !nw2) {
             setMsg(changePwMsg, "필수 항목을 모두 입력하세요.", false);
-            return;
-        }
-        if (nw1.length < 8) {
-            setMsg(changePwMsg, "비밀번호는 8자 이상이어야 합니다.", false);
             return;
         }
         if (nw1 !== nw2) {
@@ -305,32 +333,25 @@
         }
 
         try {
-            // 변경 직전에 RSA 키를 "항상" 새로 발급 (세션 privateKey 소멸 이슈 회피)
-            const ok = await loadRsaKey();
-            if (!ok) {
-                setMsg(changePwMsg, "RSA 키 요청 실패", false);
-                return;
-            }
+            // 변경도 액션 직전 키 발급(한 번) + 두 번 암호화
+            const { publicM, publicE } = await api.fetchRsaKey();
+            const encCur = api.encryptWithRsa(publicM, publicE, cur);
+            const encNew = api.encryptWithRsa(publicM, publicE, nw1);
 
-            const encCur = encryptPassword(cur);
-            const encNew = encryptPassword(nw1);
-
-            const data = await postJson(CTX + "/security/changePassword.do", {
+            const data = await api.changePassword({
                 current_pass: encCur,
-                new_pass: encNew
+                new_pass: encNew,
             });
 
             const success =
                 (data?.result && String(data.result).toLowerCase() === "success") ||
                 (data?.RESULT && String(data.RESULT).toUpperCase() === "SUCCESS");
+
             if (success) {
                 setMsg(changePwMsg, data?.message || "비밀번호가 변경되었습니다. 다시 로그인 해주세요.", true);
 
-                // 변경 완료 후 자동 로그아웃
                 setTimeout(async () => {
-                    try {
-                        await fetch(CTX + "/security/logout.do", { method: "POST", credentials: "same-origin" });
-                    } catch (e) {}
+                    try { await api.logout(); } catch (e) {}
                     location.href = CTX + "/";
                 }, 800);
             } else {
@@ -342,37 +363,57 @@
             console.error(e);
         }
     }
-    // ========== bind events
-    // 모달 닫기
+
+    async function onLogout() {
+        try {
+            await api.logout();
+            location.href = CTX + "/";
+        } catch (e) {
+            console.error(e);
+            location.href = CTX + "/";
+        }
+    }
+
+    // ===== bind events
     backdrop?.addEventListener("click", closeAll);
-    document.querySelectorAll("[data-close='true']").forEach(btn => btn.addEventListener("click", closeAll));
+    document.querySelectorAll("[data-close='true']").forEach((btn) => btn.addEventListener("click", closeAll));
+
+    btnOpenLogin?.addEventListener("click", onClickOpenLogin);
+    $("btnLogin")?.addEventListener("click", onLogin);
+
+    $("goSignup")?.addEventListener("click", showSignup);
+    $("goLogin")?.addEventListener("click", showLogin);
+
+    $("btnDupCheck")?.addEventListener("click", onDupCheck);
+    $("btnSignup")?.addEventListener("click", onSignup);
 
     btnOpenChangePw?.addEventListener("click", showChangePw);
     $("btnChangePw")?.addEventListener("click", onChangePassword);
 
-    // 상단 로그인 버튼
-    btnOpenLogin?.addEventListener("click", onClickOpenLogin);
+    btnLogout?.addEventListener("click", onLogout);
 
-    // 모달 전환
-    $("goSignup")?.addEventListener("click", showSignup);
-    $("goLogin")?.addEventListener("click", showLogin);
-
-    // 아이디가 바뀌면 중복확인 다시 하도록 초기화
+    // 중복확인 무효화
     $("signupUserId")?.addEventListener("input", () => setDupOk(false, ""));
 
-    // 버튼 액션
-    $("btnDupCheck")?.addEventListener("click", onDupCheck);
-    $("btnSignup")?.addEventListener("click", onSignup);
-    $("btnLogin")?.addEventListener("click", onLogin);
-    $("btnHeroLogin")?.addEventListener("click", onClickOpenLogin);
-    $("btnHeroSignup")?.addEventListener("click", showSignup);
-    $("btnLogout")?.addEventListener("click", onLogout);
+    // region change
+    selSido?.addEventListener("change", (e) => loadSigungu(e.target.value).catch(console.error));
+    selSigungu?.addEventListener("change", (e) => {
+        const sidoCd = (selSido?.value || "").trim();
+        loadUmd(sidoCd, e.target.value).catch(console.error);
+    });
 
-    // ========== init
-    (async function init() {
-        // 초기에는 모달을 열지 않음 (요구사항)
-        // RSA 키는 미리 로드해도 되고, 로그인 버튼 클릭 시 로드해도 됨.
-        // 여기서는 미리 로드(실패해도 버튼 클릭 시 재시도 가능)
-        await loadRsaKey();
+    (function initLoginError() {
+        const err = (window.LOGIN_ERROR || "").trim();
+        if (!err) return;
+
+        // 로그인 모달 열기
+        openModal(loginModal);
+
+        let msg = "로그인에 실패했습니다.";
+        if (err === "BAD_CREDENTIALS") msg = "계정 정보가 일치하지 않습니다.";
+        else if (err === "NO_USER") msg = "존재하지 않는 아이디입니다.";
+        else if (err === "LOCKED") msg = "로그인 시도 횟수를 초과했습니다. 잠시 후 다시 시도하세요.";
+
+        setMsg(loginMsg, msg, false);
     })();
 })();

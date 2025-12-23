@@ -40,33 +40,40 @@ public class CustomHttpSessionListener implements HttpSessionListener {
 	 */
 	@Override
 	public void sessionDestroyed(HttpSessionEvent se) {
-		String userId = (String)se.getSession().getAttribute("userId");
-		if(LOGGER.isDebugEnabled()) {
-			LOGGER.debug("===================== "+userId+" Session Destroy!! = " + se.getSession().getId() + " ===================== ");
-		}
-		//TODO Security : 세션이 종료되었을시 처리해야하는 위치
 		HttpSession session = se.getSession();
+		String userId = (String) session.getAttribute("userId");
+		String reason = (String) session.getAttribute("LOGOUT_REASON"); // "USER" or null
+
+		// 세션 정리
 		session.removeAttribute("userId");
 		session.removeAttribute("userVO");
-		
-		if(!StringUtils.isEmpty(userId)) {
-			try {
-				Map<String, Object> param = new HashMap<String, Object>();
-				param.put("userId", userId);
-				param.put("logType", "LOGOUT");
-				String content = "세션 ID("+session.getId() + ")로 로그아웃 하셨습니다.";
-				param.put("logContent", content);
-				ServletContext servletContext = session.getServletContext();
-				WebApplicationContext appContext = WebApplicationContextUtils.getWebApplicationContext(servletContext);
-				CommonDAO mainDAO = (CommonDAO)appContext.getBean("mainDAO");
-				mainDAO.insert("security.insertUserLog", param);
-			} catch (SQLException e) {
-				if(LOGGER.isErrorEnabled()) {
-					LOGGER.error("Logout Error", e);
-				}
-			}
 
+		if (StringUtils.isBlank(userId)) return;
+
+		String logType = "LOGOUT";
+		String content;
+
+		if ("USER".equals(reason)) {
+			content = "LOGOUT by user (session=" + session.getId() + ")";
+		} else {
+			content = "LOGOUT by timeout (session=" + session.getId() + ")";
+		}
+
+		try {
+			Map<String, Object> param = new HashMap<>();
+			param.put("userId", userId);
+			param.put("logType", logType);
+			param.put("logContent", content);
+
+			ServletContext servletContext = session.getServletContext();
+			WebApplicationContext appContext =
+					WebApplicationContextUtils.getWebApplicationContext(servletContext);
+
+			CommonDAO mainDAO = (CommonDAO) appContext.getBean("mainDAO");
+			mainDAO.insert("security.insertUserLog", param);
+
+		} catch (SQLException e) {
+			LOGGER.error("Logout Error", e);
 		}
 	}
-
 }

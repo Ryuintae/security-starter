@@ -163,4 +163,45 @@ public class SecurityRestController {
 
 		return result;
 	}
+	@RequestMapping(value="region/sido.do", method=RequestMethod.POST)
+	public ResultHashMap regionSido() {
+		ResultHashMap result = new ResultHashMap();
+		try {
+			result.put("list", securityService.selectSidoList());
+			result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_SUCCESS);
+		} catch (Exception e) {
+			LOGGER.error("/security/region/sido.do Error", e);
+			result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_FAILURE);
+		}
+		return result;
+	}
+
+	@RequestMapping(value="region/sigungu.do", method=RequestMethod.POST)
+	public ResultHashMap regionSigungu(@RequestBody Map<String, Object> req) {
+		ResultHashMap result = new ResultHashMap();
+		try {
+			String sidoCd = (String) req.get("sido_cd");
+			result.put("list", securityService.selectSigunguList(sidoCd));
+			result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_SUCCESS);
+		} catch (Exception e) {
+			LOGGER.error("/security/region/sigungu.do Error", e);
+			result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_FAILURE);
+		}
+		return result;
+	}
+
+	@RequestMapping(value="region/umd.do", method=RequestMethod.POST)
+	public ResultHashMap regionUmd(@RequestBody Map<String, Object> req) {
+		ResultHashMap result = new ResultHashMap();
+		try {
+			String sidoCd = (String) req.get("sido_cd");
+			String sigunguCd = (String) req.get("sigungu_cd");
+			result.put("list", securityService.selectUmdList(sidoCd, sigunguCd));
+			result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_SUCCESS);
+		} catch (Exception e) {
+			LOGGER.error("/security/region/umd.do Error", e);
+			result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_FAILURE);
+		}
+		return result;
+	}
 }
