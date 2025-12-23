@@ -198,6 +198,10 @@ body {
     line-height: 1.7;
 }
 .topbar-right { display: flex; align-items: center; gap: 10px; margin-left: auto;}
+.topbar-right .btn {
+    padding: 8px 10px;
+    border-radius: 10px;
+}
 .welcome { font-size: 14px; color: #111; font-weight: 700; }
 .hero-readme { margin-top: 12px; display: grid; gap: 10px; }
 .hero-row {

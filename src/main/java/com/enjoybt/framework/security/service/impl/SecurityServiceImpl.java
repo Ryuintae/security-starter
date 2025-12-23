@@ -96,4 +96,12 @@ public class SecurityServiceImpl implements SecurityService {
                 p
         );
     }
+    @Override
+    public void changePassword(String userId, String newEncodedPassword) throws Exception {
+        Map<String, Object> p = new HashMap<>();
+        p.put("user_id", userId);
+        p.put("user_pass", newEncodedPassword);
+
+        sqlSession.update(SECURITY_MAPPER + "updateUserPassword", p);
+    }
 }

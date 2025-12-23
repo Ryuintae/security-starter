@@ -102,5 +102,11 @@
 		  AND
 			LOG_CONTENT NOT IN (SELECT COL FROM LOGOUT_DATA)
 	</insert>
-
+	<update id="updateUserPassword" parameterType="java.util.HashMap">
+		UPDATE user_auth."user"
+		SET user_pass = #{user_pass}
+		WHERE user_id = #{user_id}
+		  AND view_yn = true
+		  AND approval_yn = true
+	</update>
 </mapper>

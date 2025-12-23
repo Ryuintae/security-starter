@@ -34,9 +34,11 @@
     <div class="topbar-inner">
         <div class="topbar-right">
             <sec:authorize access="isAuthenticated()">
-        <span class="welcome">
-            <sec:authentication property="name"/>님 환영합니다.
-        </span>
+    <span class="welcome">
+        <sec:authentication property="name"/>님 환영합니다.
+    </span>
+                <button id="btnOpenChangePw" type="button" class="btn">비밀번호 변경</button>
+                <button id="btnLogout" type="button" class="btn">로그아웃</button>
             </sec:authorize>
 
             <sec:authorize access="isAnonymous()">
@@ -156,6 +158,39 @@
         <div id="signupMsg" class="msg" aria-live="polite"></div>
     </div>
 </div>
+<!-- Change Password Modal -->
+<div id="changePwModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="changePwTitle">
+    <div class="modal-header">
+        <h2 id="changePwTitle">비밀번호 변경</h2>
+        <button type="button" class="modal-close" data-close="true">×</button>
+    </div>
 
+    <div class="modal-body">
+        <div class="field">
+            <label for="curPw">현재 비밀번호</label>
+            <input id="curPw" type="password" autocomplete="current-password"/>
+        </div>
+
+        <div class="field">
+            <label for="newPw">새 비밀번호</label>
+            <input id="newPw" type="password" autocomplete="new-password"/>
+        </div>
+
+        <div class="field">
+            <label for="newPw2">새 비밀번호 확인</label>
+            <input id="newPw2" type="password" autocomplete="new-password"/>
+        </div>
+
+        <div class="actions">
+            <button id="btnChangePw" type="button" class="btn btn--primary">변경</button>
+        </div>
+
+        <div id="changePwMsg" class="msg" aria-live="polite"></div>
+
+        <p class="hint" style="margin-top:10px;">
+            보안을 위해 변경 완료 후 자동 로그아웃됩니다.
+        </p>
+    </div>
+</div>
 </body>
 </html>

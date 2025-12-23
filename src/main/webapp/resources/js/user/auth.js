@@ -12,6 +12,10 @@
     const signupMsg = $("signupMsg");
     const dupMsg = $("dupMsg");
 
+    const btnOpenChangePw = $("btnOpenChangePw");
+    const changePwModal = $("changePwModal");
+    const changePwMsg = $("changePwMsg");
+
     const loginForm = document.getElementById("loginForm");
 
     let rsaPublicM = null;
@@ -27,6 +31,7 @@
         if (backdrop) backdrop.classList.remove("is-open");
         if (loginModal) loginModal.classList.remove("is-open");
         if (signupModal) signupModal.classList.remove("is-open");
+        if (changePwModal) changePwModal.classList.remove("is-open");
     }
 
     function showLogin() {
@@ -256,11 +261,94 @@
             console.error(e);
         }
     }
+    async function onLogout() {
+        // Spring Security logout-url
+        try {
+            await fetch(CTX + "/security/logout.do", { method: "POST", credentials: "same-origin" });
+            location.href = CTX + "/"; // 로그아웃 성공 후 루트
+        } catch (e) {
+            console.error(e);
+            location.href = CTX + "/"; // 실패해도 이동
+        }
+    }
+    function showChangePw() {
+        // 메시지/입력 초기화
+        if (changePwMsg) changePwMsg.textContent = "";
+        $("curPw") && ($("curPw").value = "");
+        $("newPw") && ($("newPw").value = "");
+        $("newPw2") && ($("newPw2").value = "");
 
+        openModal(changePwModal);
+        $("curPw")?.focus();
+    }
+
+    async function onChangePassword() {
+        const cur = (($("curPw")?.value) || "").trim();
+        const nw1 = (($("newPw")?.value) || "").trim();
+        const nw2 = (($("newPw2")?.value) || "").trim();
+
+        if (!cur || !nw1 || !nw2) {
+            setMsg(changePwMsg, "필수 항목을 모두 입력하세요.", false);
+            return;
+        }
+        if (nw1.length < 8) {
+            setMsg(changePwMsg, "비밀번호는 8자 이상이어야 합니다.", false);
+            return;
+        }
+        if (nw1 !== nw2) {
+            setMsg(changePwMsg, "새 비밀번호가 일치하지 않습니다.", false);
+            return;
+        }
+        if (cur === nw1) {
+            setMsg(changePwMsg, "새 비밀번호는 현재 비밀번호와 달라야 합니다.", false);
+            return;
+        }
+
+        try {
+            // 변경 직전에 RSA 키를 "항상" 새로 발급 (세션 privateKey 소멸 이슈 회피)
+            const ok = await loadRsaKey();
+            if (!ok) {
+                setMsg(changePwMsg, "RSA 키 요청 실패", false);
+                return;
+            }
+
+            const encCur = encryptPassword(cur);
+            const encNew = encryptPassword(nw1);
+
+            const data = await postJson(CTX + "/security/changePassword.do", {
+                current_pass: encCur,
+                new_pass: encNew
+            });
+
+            const success =
+                (data?.result && String(data.result).toLowerCase() === "success") ||
+                (data?.RESULT && String(data.RESULT).toUpperCase() === "SUCCESS");
+            if (success) {
+                setMsg(changePwMsg, data?.message || "비밀번호가 변경되었습니다. 다시 로그인 해주세요.", true);
+
+                // 변경 완료 후 자동 로그아웃
+                setTimeout(async () => {
+                    try {
+                        await fetch(CTX + "/security/logout.do", { method: "POST", credentials: "same-origin" });
+                    } catch (e) {}
+                    location.href = CTX + "/";
+                }, 800);
+            } else {
+                setMsg(changePwMsg, data?.message || "비밀번호 변경 실패", false);
+                console.error("changePassword response:", data);
+            }
+        } catch (e) {
+            setMsg(changePwMsg, "비밀번호 변경 중 오류", false);
+            console.error(e);
+        }
+    }
     // ========== bind events
     // 모달 닫기
     backdrop?.addEventListener("click", closeAll);
     document.querySelectorAll("[data-close='true']").forEach(btn => btn.addEventListener("click", closeAll));
+
+    btnOpenChangePw?.addEventListener("click", showChangePw);
+    $("btnChangePw")?.addEventListener("click", onChangePassword);
 
     // 상단 로그인 버튼
     btnOpenLogin?.addEventListener("click", onClickOpenLogin);
@@ -278,6 +366,7 @@
     $("btnLogin")?.addEventListener("click", onLogin);
     $("btnHeroLogin")?.addEventListener("click", onClickOpenLogin);
     $("btnHeroSignup")?.addEventListener("click", showSignup);
+    $("btnLogout")?.addEventListener("click", onLogout);
 
     // ========== init
     (async function init() {

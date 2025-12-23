@@ -4,6 +4,8 @@ import com.enjoybt.framework.config.Constants;
 import com.enjoybt.framework.security.encoder.RSAGenerator;
 import com.enjoybt.framework.security.service.SecurityService;
 import com.enjoybt.framework.security.util.ResultHashMap;
+import com.enjoybt.framework.security.util.SecurityEncoder;
+import com.enjoybt.framework.security.vo.UserVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,6 +96,71 @@ public class SecurityRestController {
 			LOGGER.error("/security/signup.do Error", e);
 			result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_FAILURE);
 		}
+		return result;
+	}
+	@RequestMapping(value="changePassword.do", method=RequestMethod.POST)
+	public ResultHashMap changePassword(HttpServletRequest request, @RequestBody Map<String, Object> req) {
+		ResultHashMap result = new ResultHashMap();
+
+		try {
+			// 0) 로그인 사용자 ID (Spring Security)
+			String userId = org.springframework.security.core.context.SecurityContextHolder
+					.getContext().getAuthentication().getName();
+
+			// 1) RSA 암호문 꺼내기
+			String encCurrent = (String) req.get("current_pass");
+			String encNew = (String) req.get("new_pass");
+
+			if (encCurrent == null || encNew == null) {
+				result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_FAILURE);
+				result.put("message", "필수 파라미터 누락");
+				return result;
+			}
+
+			// 2) PrivateKey 꺼내고 복호화 (꺼내면 세션에서 제거)
+			PrivateKey privateKey = RSAGenerator.getPrivateKey(request.getSession());
+
+			String rawCurrent = RSAGenerator.getValue(privateKey, encCurrent);
+			String rawNew = RSAGenerator.getValue(privateKey, encNew);
+
+			// 3) 현재 사용자 정보 로드
+			UserVO user = securityService.loadUserByUserId(userId);
+			if (user == null) {
+				result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_FAILURE);
+				result.put("message", "사용자 없음");
+				return result;
+			}
+
+			// 4) 현재 비번 검증 (DB 해시 vs 입력 평문)
+			// SecurityEncoder가 matches 제공하면 그걸 쓰는 게 정석
+			SecurityEncoder encoder = new SecurityEncoder();
+			boolean ok = encoder.matches(rawCurrent, user.getPassword()); // getPassword()가 user_pass(해시)
+
+			if (!ok) {
+				result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_FAILURE);
+				result.put("message", "현재 비밀번호가 일치하지 않습니다.");
+				return result;
+			}
+
+			// 5) 새 비번 정책 검사(선택)
+			if (rawNew.length() < 8) {
+				result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_FAILURE);
+				result.put("message", "비밀번호는 8자 이상이어야 합니다.");
+				return result;
+			}
+
+			// 6) 새 비번 해시 후 업데이트
+			String newEncoded = encoder.encode(rawNew);
+			securityService.changePassword(userId, newEncoded);
+
+			result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_SUCCESS);
+			result.put("message", "비밀번호가 변경되었습니다.");
+		} catch (Exception e) {
+			LOGGER.error("/security/changePassword.do Error", e);
+			result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_FAILURE);
+			result.put("message", "서버 오류");
+		}
+
 		return result;
 	}
 }

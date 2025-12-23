@@ -67,5 +67,10 @@
 			<concurrency-control max-sessions="100"/>
 		</session-management>
 		<custom-filter ref="usernamePasswordAuthenticationFilter" position="FORM_LOGIN_FILTER"/>
+
+		<logout logout-url="/security/logout.do"
+				logout-success-url="/"
+				invalidate-session="true"
+				delete-cookies="JSESSIONID"/>
 	</http>
 </beans:beans>

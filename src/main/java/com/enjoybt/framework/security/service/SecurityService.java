@@ -22,4 +22,5 @@ public interface SecurityService {
 
     Map<String, Object> checkDuplicateId(String userId) throws Exception;
 
+    void changePassword(String userId, String newEncodedPassword) throws Exception;
 }
