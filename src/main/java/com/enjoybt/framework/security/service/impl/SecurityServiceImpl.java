@@ -123,4 +123,14 @@ public class SecurityServiceImpl implements SecurityService {
         p.put("sigungu_cd", sigunguCd);
         return sqlSession.selectList(SECURITY_MAPPER + "selectUmdList", p);
     }
+
+    @Override
+    public List<Map<String, Object>> findUserIds(String userName, String email, String userTel) throws Exception {
+        Map<String, Object> p = new HashMap<>();
+        p.put("user_name", userName);
+        p.put("email", email);
+        p.put("user_tel", userTel);
+
+        return sqlSession.selectList(SECURITY_MAPPER + "findUserIds", p);
+    }
 }

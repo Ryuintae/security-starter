@@ -115,7 +115,10 @@
             계정이 없으신가요?
             <button type="button" class="link" id="goSignup">회원가입</button>
         </p>
-
+        <p class="switch">
+            아이디를 잊으셨나요?
+            <button type="button" class="link" id="goFindId">아이디 찾기</button>
+        </p>
         <div id="loginMsg" class="msg" aria-live="polite"></div>
     </div>
 </div>
@@ -237,6 +240,36 @@
         <p class="hint" style="margin-top:10px;">
             보안을 위해 변경 완료 후 자동 로그아웃됩니다.
         </p>
+    </div>
+</div>
+<!-- Find ID Modal -->
+<div id="findIdModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="findIdTitle">
+    <div class="modal-header">
+        <h2 id="findIdTitle">아이디 찾기</h2>
+        <button type="button" class="modal-close" data-close="true">×</button>
+    </div>
+
+    <div class="modal-body">
+        <div class="field">
+            <label for="findName">이름</label>
+            <input id="findName" type="text"/>
+        </div>
+
+        <div class="field">
+            <label for="findEmail">이메일 (또는 전화번호 중 하나 필수)</label>
+            <input id="findEmail" type="email" autocomplete="email"/>
+        </div>
+
+        <div class="field">
+            <label for="findTel">전화번호</label>
+            <input id="findTel" type="tel" placeholder="01012345678"/>
+        </div>
+
+        <div class="actions">
+            <button id="btnFindId" type="button" class="btn btn--primary">조회</button>
+        </div>
+
+        <div id="findIdMsg" class="msg" aria-live="polite"></div>
     </div>
 </div>
 </body>

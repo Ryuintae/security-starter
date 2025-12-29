@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.security.PrivateKey;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -203,5 +205,48 @@ public class SecurityRestController {
 			result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_FAILURE);
 		}
 		return result;
+	}
+	@RequestMapping(value="findId.do", method=RequestMethod.POST)
+	public ResultHashMap findId(@RequestBody Map<String, Object> req) {
+		ResultHashMap result = new ResultHashMap();
+
+		try {
+			String userName = req == null ? null : (String) req.get("user_name");
+			String email = req == null ? null : (String) req.get("email");
+			String userTel = req == null ? null : (String) req.get("user_tel");
+
+			userName = (userName == null) ? null : userName.trim();
+			email = (email == null) ? null : email.trim();
+			userTel = (userTel == null) ? null : userTel.trim();
+
+			if (userName == null || userName.isEmpty()) {
+				result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_FAILURE);
+				result.put("message", "이름은 필수입니다.");
+				return result;
+			}
+			if ((email == null || email.isEmpty()) && (userTel == null || userTel.isEmpty())) {
+				result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_FAILURE);
+				result.put("message", "이메일 또는 전화번호 중 하나는 필수입니다.");
+				return result;
+			}
+
+			List<Map<String, Object>> rows = securityService.findUserIds(userName, email, userTel);
+
+			List<String> ids = new ArrayList<>();
+			for (Map<String, Object> r : rows) {
+				ids.add((String) r.get("user_id"));
+			}
+
+			result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_SUCCESS);
+			result.put("list", ids);
+			result.put("message", ids.isEmpty() ? "일치하는 계정을 찾지 못했습니다." : "아이디 조회가 완료되었습니다.");
+			return result;
+
+		} catch (Exception e) {
+			LOGGER.error("/security/findId.do Error", e);
+			result.put(Constants.KEY_RESULT, Constants.VALUE_RESULT_FAILURE);
+			result.put("message", "서버 오류");
+			return result;
+		}
 	}
 }

@@ -94,6 +94,9 @@
             credentials: "same-origin",
         });
     }
+    function findId(payload) {
+        return postJson("/security/findId.do", payload);
+    }
 
     window.SECURITY_API = {
         // low-level
@@ -107,6 +110,7 @@
         signup,
         changePassword,
         logout,
+        findId,
         // region
         regionSido,
         regionSigungu,

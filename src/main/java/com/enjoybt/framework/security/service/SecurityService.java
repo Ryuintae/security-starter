@@ -28,4 +28,7 @@ public interface SecurityService {
     List<Map<String, Object>> selectSidoList() throws Exception;
     List<Map<String, Object>> selectSigunguList(String sidoCd) throws Exception;
     List<Map<String, Object>> selectUmdList(String sidoCd, String sigunguCd) throws Exception;
+
+    List<Map<String, Object>> findUserIds(String userName, String email, String userTel) throws Exception;
+
 }

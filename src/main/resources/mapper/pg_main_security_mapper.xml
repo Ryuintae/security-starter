@@ -133,4 +133,27 @@
 		  AND sigungu_cd = #{sigungu_cd}
 		ORDER BY umd_cd
 	</select>
+	<!-- 아이디 찾기: 이름 + (이메일 또는 전화번호) -->
+	<select id="findUserIds" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT user_id
+		FROM user_auth."user"
+		WHERE user_name = #{user_name}
+		AND view_yn = true
+		AND approval_yn = true
+		AND (
+		<if test="email != null and email != ''">
+			email = #{email}
+		</if>
+
+		<if test="(email != null and email != '') and (user_tel != null and user_tel != '')">
+			OR
+		</if>
+
+		<if test="user_tel != null and user_tel != ''">
+			user_tel = #{user_tel}
+		</if>
+		)
+		ORDER BY reg_date DESC
+		LIMIT 5
+	</select>
 </mapper>

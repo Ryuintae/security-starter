@@ -27,6 +27,9 @@
     const btnOpenChangePw = $("btnOpenChangePw");
     const loginForm = $("loginForm");
 
+    const findIdModal = $("findIdModal");
+    const findIdMsg = $("findIdMsg");
+
     // region selects
     const selSido = $("selSido");
     const selSigungu = $("selSigungu");
@@ -48,6 +51,7 @@
         loginModal?.classList.remove("is-open");
         signupModal?.classList.remove("is-open");
         changePwModal?.classList.remove("is-open");
+        findIdModal?.classList.remove("is-open");
     }
 
     function setMsg(el, text, ok) {
@@ -374,6 +378,52 @@
         }
     }
 
+    function showFindId() {
+        setMsg(findIdMsg, "", true);
+        loginModal?.classList.remove("is-open");
+        openModal(findIdModal);
+        $("findName")?.focus();
+    }
+
+    async function onFindId() {
+        const name = (($("findName")?.value) || "").trim();
+        const email = (($("findEmail")?.value) || "").trim();
+        const tel = (($("findTel")?.value) || "").trim();
+
+        if (!name) {
+            setMsg(findIdMsg, "이름을 입력하세요.", false);
+            return;
+        }
+        if (!email && !tel) {
+            setMsg(findIdMsg, "이메일 또는 전화번호 중 하나를 입력하세요.", false);
+            return;
+        }
+
+        try {
+            const data = await api.findId({ user_name: name, email: email || null, user_tel: tel || null });
+            const ok =
+                (data?.result && String(data.result).toLowerCase() === "success") ||
+                (data?.RESULT && String(data.RESULT).toUpperCase() === "SUCCESS");
+
+            if (!ok) {
+                setMsg(findIdMsg, data?.message || "조회에 실패했습니다.", false);
+                return;
+            }
+
+            const list = data?.list || [];
+            if (!list.length) {
+                setMsg(findIdMsg, data?.message || "일치하는 계정을 찾지 못했습니다.", false);
+                return;
+            }
+
+            // 아이디 목록 표시
+            setMsg(findIdMsg, `조회된 아이디: ${list.join(", ")}`, true);
+        } catch (e) {
+            console.error(e);
+            setMsg(findIdMsg, "조회 중 오류가 발생했습니다.", false);
+        }
+    }
+
     // ===== bind events
     backdrop?.addEventListener("click", closeAll);
     document.querySelectorAll("[data-close='true']").forEach((btn) => btn.addEventListener("click", closeAll));
@@ -392,7 +442,9 @@
 
     btnLogout?.addEventListener("click", onLogout);
 
-    // 중복확인 무효화
+    $("goFindId")?.addEventListener("click", showFindId);
+    $("btnFindId")?.addEventListener("click", onFindId);
+    // 중복확인
     $("signupUserId")?.addEventListener("input", () => setDupOk(false, ""));
 
     // region change
