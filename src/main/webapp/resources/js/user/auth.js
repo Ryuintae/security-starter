@@ -458,13 +458,21 @@
         const err = (window.LOGIN_ERROR || "").trim();
         if (!err) return;
 
-        // 로그인 모달 열기
         openModal(loginModal);
 
+        const n = parseInt((window.LOGIN_FAIL_CNT || "0").trim(), 10) || 0;
+
         let msg = "로그인에 실패했습니다.";
-        if (err === "BAD_CREDENTIALS") msg = "계정 정보가 일치하지 않습니다.";
-        else if (err === "NO_USER") msg = "존재하지 않는 아이디입니다.";
-        else if (err === "LOCKED") msg = "로그인 시도 횟수를 초과했습니다. 잠시 후 다시 시도하세요.";
+
+        if (err === "BAD_CREDENTIALS") {
+            // n은 1~4가 들어오는 케이스
+            msg = `${n}회 실패했습니다. (5회 실패 시 계정이 잠깁니다.)`;
+        } else if (err === "LOCKED") {
+            // n은 5 이상
+            msg = `5회 시도 시 계정이 잠깁니다. 현재 ${n}회 실패로 계정이 잠겼습니다. 관리자에게 문의하세요.`;
+        } else if (err === "NO_USER") {
+            msg = "존재하지 않는 아이디입니다.";
+        }
 
         setMsg(loginMsg, msg, false);
     })();

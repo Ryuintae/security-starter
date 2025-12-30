@@ -13,6 +13,7 @@
     <script>
         window.CTX = "${ctx}";
         window.LOGIN_ERROR = "${param.loginError}";
+        window.LOGIN_FAIL_CNT = "${param.failCnt}";
     </script>
 
     <!-- CSS -->

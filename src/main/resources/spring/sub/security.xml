@@ -1,76 +1,157 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans:beans xmlns="http://www.springframework.org/schema/security"
-			 xmlns:beans="http://www.springframework.org/schema/beans"
+<!--
+  Spring Security 설정 파일.
+  - beans 네임스페이스: 스프링 빈(객체) 등록
+  - sec 네임스페이스: Spring Security 전용 설정
+-->
+<beans:beans xmlns:beans="http://www.springframework.org/schema/beans"
+			 xmlns:sec="http://www.springframework.org/schema/security"
 			 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-			 xmlns:p="http://www.springframework.org/schema/p"
-			 xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
-                                 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
-                                 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+			 xsi:schemaLocation="
+               http://www.springframework.org/schema/beans    http://www.springframework.org/schema/beans/spring-beans.xsd
+               http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
 
-	<!-- 시큐리티 제외(정적/특정경로) 체인 선언 -->
-	<http pattern="/websocket/**" security="none" />
-	<http pattern="/resources/**" security="none" />
-	<http pattern="/cmm/**" security="none" />
-	<http pattern="/api/**" security="none" />
-<!--	<http pattern="/favicon.ico" security="none" />-->
+	<!-- Security Filter Chain 제외(무시) 패턴들 -->
+	<!-- /websocket/** 경로는 Spring Security 필터를 적용하지 않음 (인증/인가 완전 제외) -->
+	<sec:http pattern="/websocket/**" security="none"/>
 
-	<!-- 정적 리소스 예외 추가 -->
-	<http pattern="/css/**" security="none" />
-	<http pattern="/js/**" security="none" />
-	<http pattern="/images/**" security="none" />
+	<!-- 정적 리소스(또는 공용 리소스) 경로들은 보안 필터 제외 -->
+	<sec:http pattern="/resources/**" security="none"/>
+	<sec:http pattern="/cmm/**" security="none"/>
+	<sec:http pattern="/api/**" security="none"/>
+	<sec:http pattern="/css/**" security="none"/>
+	<sec:http pattern="/js/**" security="none"/>
+	<sec:http pattern="/images/**" security="none"/>
 
-	<!-- 나머지 요청을 처리하는 메인 체인 -->
-	<beans:bean id="loginHandler" class="com.enjoybt.framework.security.LoginHandler" />
-	<beans:bean id="usernamePasswordAuthenticationFilter" class="com.enjoybt.framework.security.CustomUserNamePassword">
-		<beans:property name="authenticationManager" ref="loginHandler" />
-		<beans:property name="authenticationFailureHandler" ref="loginHandler" />
-		<beans:property name="authenticationSuccessHandler" ref="loginHandler" />
-		<beans:property name="filterProcessesUrl" value="/security/loginProcess.do" />
-		<beans:property name="usernameParameter" value="userID" />
-		<beans:property name="passwordParameter" value="password" />
+	<!-- 애플리케이션에서 사용할 Bean 등록 -->
+
+	<!--
+      loginHandler: 로그인 성공/실패 핸들링(또는 AuthenticationManager 역할까지 포함)하는 커스텀 클래스
+      - 아래 customUsernamePasswordFilter에서 인증매니저/성공핸들러/실패핸들러로 동시에 참조 중
+    -->
+	<beans:bean id="loginHandler" class="com.enjoybt.framework.security.LoginHandler"/>
+
+	<!--
+      customUsernamePasswordFilter: UsernamePasswordAuthenticationFilter 계열 커스텀 필터
+      - 사용자가 /security/loginProcess.do로 요청하면 이 필터가 가로채서 인증 시도
+    -->
+	<beans:bean id="customUsernamePasswordFilter"
+				class="com.enjoybt.framework.security.CustomUserNamePassword">
+		<!-- 인증 수행(사용자 인증 로직)을 담당할 AuthenticationManager 지정 -->
+		<beans:property name="authenticationManager" ref="loginHandler"/>
+
+		<!-- 인증 실패 시 실행할 핸들러 -->
+		<beans:property name="authenticationFailureHandler" ref="loginHandler"/>
+
+		<!-- 인증 성공 시 실행할 핸들러 -->
+		<beans:property name="authenticationSuccessHandler" ref="loginHandler"/>
+
+		<!-- 이 URL로 들어오는 요청을 이 필터가 로그인 프로세스로 처리 -->
+		<beans:property name="filterProcessesUrl" value="/security/loginProcess.do"/>
+
+		<!-- 로그인 폼에서 사용자 ID 파라미터 이름 -->
+		<beans:property name="usernameParameter" value="userID"/>
+
+		<!-- 로그인 폼에서 비밀번호 파라미터 이름 -->
+		<beans:property name="passwordParameter" value="password"/>
 	</beans:bean>
 
-	<beans:bean id="loginUrlAuthenticationEntryPoint"
-				class="org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint">
-		<beans:constructor-arg name="loginFormUrl" value="/" />
+	<!--
+      logoutSuccessHandler: 로그아웃 성공 이후의 후처리/리다이렉트 등을 커스텀으로 수행
+      - invalidate-session="false"라 세션을 직접 무효화하지 않으므로, 이 핸들러에서 별도 처리 가능
+    -->
+	<beans:bean id="logoutSuccessHandler"
+				class="com.enjoybt.framework.security.CustomLogoutSuccessHandler">
+		<!-- 로그아웃 성공 후 이동할 URL(커스텀 핸들러 내부에서 사용) -->
+		<beans:property name="redirectUrl" value="/"/>
 	</beans:bean>
 
-	<http auto-config="false" use-expressions="true" entry-point-ref="loginUrlAuthenticationEntryPoint">
-		<headers>
-			<frame-options policy="SAMEORIGIN" />
-		</headers>
-		<csrf disabled="true"/>
-		<access-denied-handler error-page="/code403.jsp"/>
+	<!-- 메인 Security Filter Chain(실제 인증/인가 규칙) -->
 
-		<!-- 로그인 화면 / 루트 페이지 -->
-		<intercept-url pattern="/" access="permitAll" />
+	<!--
+      auto-config="false": Spring Security 기본 필터 자동 구성을 끔
+      use-expressions="true": access 속성에서 SpEL 표현식(hasRole 등) 사용
+    -->
+	<sec:http auto-config="false" use-expressions="true">
 
-		<!-- 로그인 처리 -->
-		<intercept-url pattern="/security/loginProcess.do" access="permitAll" />
+		<!-- 보안 헤더 설정 -->
+		<sec:headers>
+			<sec:frame-options policy="SAMEORIGIN"/>
+		</sec:headers>
 
-		<!-- 회원가입 / 중복확인 / RSA -->
-		<intercept-url pattern="/security/**" access="permitAll" />
+		<!-- CSRF 보호 비활성화 -->
+		<sec:csrf disabled="true"/>
 
-		<!-- 공용 API -->
-		<intercept-url pattern="/apiUsr/**" access="permitAll" />
-		<intercept-url pattern="/gov/**" access="permitAll" />
+		<!-- 인가 거부(403) 발생 시 이동할 에러 페이지 -->
+		<sec:access-denied-handler error-page="/code403.jsp"/>
 
-		<!-- 관리자 -->
-		<intercept-url pattern="/apiMng/**" access="hasRole('ADMIN')" />
-		<intercept-url pattern="/manage/**" access="hasRole('ADMIN')" />
-		<intercept-url pattern="/gov/manage/**" access="hasAnyRole('ADMIN','GOV')" />
+		<!-- URL 접근 제어(Intercept-URL) -->
 
-		<!-- 그 외는 로그인 필수 -->
-		<intercept-url pattern="/**" access="hasAnyRole('ADMIN','USER','GOV')" />
+		<!-- 루트(/)는 누구나 접근 허용 -->
+		<sec:intercept-url pattern="/" access="permitAll"/>
 
-		<session-management>
-			<concurrency-control max-sessions="100"/>
-		</session-management>
-		<custom-filter ref="usernamePasswordAuthenticationFilter" position="FORM_LOGIN_FILTER"/>
+		<!-- 커스텀 로그인 처리 URL은 누구나 접근 허용(로그인 시도 자체는 막으면 안 됨) -->
+		<sec:intercept-url pattern="/security/loginProcess.do" access="permitAll"/>
 
-		<logout logout-url="/security/logout.do"
-				logout-success-url="/"
-				invalidate-session="true"
-				delete-cookies="JSESSIONID"/>
-	</http>
+		<!-- /security/** 하위는 전부 허용(로그인/로그아웃/기타 보안 관련 페이지를 열어둔 구조) -->
+		<sec:intercept-url pattern="/security/**" access="permitAll"/>
+
+		<!-- 사용자용 API는 전부 허용 -->
+		<sec:intercept-url pattern="/apiUsr/**" access="permitAll"/>
+
+		<!-- /gov/** 경로는 전부 허용(단, 아래에 /gov/manage/**가 더 구체적으로 제한됨) -->
+		<sec:intercept-url pattern="/gov/**" access="permitAll"/>
+
+		<!-- 관리용 API는 ADMIN만 허용 -->
+		<sec:intercept-url pattern="/apiMng/**" access="hasRole('ADMIN')"/>
+
+		<!-- /manage/**는 ADMIN만 허용 -->
+		<sec:intercept-url pattern="/manage/**" access="hasRole('ADMIN')"/>
+
+		<!-- /gov/manage/**는 ADMIN 또는 GOV 역할만 허용 -->
+		<sec:intercept-url pattern="/gov/manage/**" access="hasAnyRole('ADMIN','GOV')"/>
+
+		<!-- 그 외 모든 경로는 ADMIN/USER/GOV 중 하나의 역할을 가진 사용자만 접근 허용 -->
+		<sec:intercept-url pattern="/**" access="hasAnyRole('ADMIN','USER','GOV')"/>
+
+		<!-- 세션 정책 -->
+		<sec:session-management>
+			<!-- 동시 세션 제어: 한 계정당 최대 세션 수(동시 로그인 허용 수) -->
+			<sec:concurrency-control max-sessions="100"/>
+		</sec:session-management>
+
+		<!-- form-login-->
+		<!--
+          Spring Security 초기화를 위해 form-login을 선언
+          - 기본 FORM_LOGIN_FILTER가 등록되지 않으면 설정 오류가 발생
+          - 실제 로그인 인증 처리는 커스텀 로그인 필터가 담당
+          - login-processing-url은 더미 URL로 지정하여 기본 필터는 사용하지 않음
+        -->
+		<sec:form-login login-page="/"
+						login-processing-url="/__dummy_login"
+						default-target-url="/"
+						always-use-default-target="true"
+						authentication-failure-url="/?loginError=FAIL"/>
+
+		<!-- 커스텀 로그인 필터 주입 -->
+		<!--
+          customUsernamePasswordFilter를 Spring Security 필터 체인에 삽입
+          before="FORM_LOGIN_FILTER": 기본 폼 로그인 필터보다 앞에서 실행되도록 배치
+          (즉, /security/loginProcess.do는 이 커스텀 필터가 먼저 처리)
+        -->
+		<sec:custom-filter ref="customUsernamePasswordFilter" before="FORM_LOGIN_FILTER"/>
+
+		<!-- 로그아웃 처리 -->
+		<!--
+          logout-url: 로그아웃 요청을 받을 URL
+          success-handler-ref: 로그아웃 성공 후 커스텀 핸들러 실행
+          invalidate-session="false": 로그아웃 시 세션을 자동 무효화하지 않음(세션 유지/커스텀 무효화 의도)
+          delete-cookies="JSESSIONID": 응답에서 JSESSIONID 쿠키 삭제 지시(브라우저 측 세션 쿠키 제거)
+        -->
+		<sec:logout logout-url="/security/logout.do"
+					success-handler-ref="logoutSuccessHandler"
+					invalidate-session="false"
+					delete-cookies="JSESSIONID"/>
+	</sec:http>
+
 </beans:beans>

@@ -65,12 +65,12 @@
 	</insert>
 
 	<!-- 로그인 실패 횟수 증가 -->
-	<update id="addLoginCnt" parameterType="java.lang.String">
+	<select id="addLoginCnt" parameterType="java.lang.String" resultType="int">
 		UPDATE user_auth."user"
 		SET login_cnt = login_cnt + 1
 		WHERE user_id = #{value}
-	</update>
-
+			RETURNING login_cnt
+	</select>
 	<!-- 로그인 실패 횟수 초기화 -->
 	<update id="resetLoginCnt" parameterType="java.lang.String">
 		UPDATE user_auth."user"
