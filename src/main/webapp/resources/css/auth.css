@@ -177,7 +177,7 @@ body {
     justify-content: center;
 }
 .hero-card {
-    width: min(720px, 100%);
+    width: min(900px, 100%);
     background: #fff;
     border: 1px solid #eee;
     border-radius: 18px;
@@ -212,27 +212,29 @@ body {
 }
 .welcome { font-size: 14px; color: #111; font-weight: 700; }
 .hero-readme { margin-top: 12px; display: grid; gap: 10px; }
-.hero-row {
+.hero-row{
     display: grid;
-    grid-template-columns: 64px 1fr;
-    gap: 10px;
+    grid-template-columns: 96px 1fr;
+    gap: 18px;
     align-items: start;
-    padding: 10px 12px;
-    border: 1px solid #f0f0f0;
-    border-radius: 12px;
-    background: #fafafa;
+    padding: 0;
+    border: 0;
+    background: transparent;
 }
-.hero-tag {
+.hero-tag{
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    height: 26px;
-    padding: 0 10px;
-    border-radius: 999px;
-    background: #111;
-    color: #fff;
+
     font-size: 12px;
     font-weight: 700;
+    color: #111;
+
+    padding: 2px 0 2px 10px;
+    border-left: 3px solid #111;
+
+    line-height: 1.4;
+    white-space: nowrap;
+    opacity: 0.85;
 }
 .hero-text { margin: 0; color: #333; line-height: 1.55; font-size: 13px; }
 .hero-note {
@@ -251,3 +253,60 @@ body {
     background: #fff;
 }
 .req { color:#dc2626; font-weight:700; margin-left:4px; }
+.topbar-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.topbar-title {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+}
+
+.topbar-title .sep {
+    opacity: 0.5;
+    margin: 0 2px;
+}
+.hero-row--inline{
+    align-items: flex-start;
+}
+
+.feature-chips{
+    display: grid;
+    gap: 6px;
+    list-style: none;
+    padding: 0;
+    margin: 2px 0 0;
+    width: 100%;
+    max-width: 520px;
+}
+
+.feature-chips li{
+    position: relative;
+    padding: 8px 10px 8px 18px;
+    font-size: 13px;
+    color: #222;
+    line-height: 1.45;
+
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.feature-chips li:last-child{
+    border-bottom: 0;
+}
+
+.feature-chips li::before{
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 14px;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #111;
+    opacity: 0.25;
+}

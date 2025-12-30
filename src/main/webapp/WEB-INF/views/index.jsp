@@ -34,11 +34,17 @@
 <!-- 상단바: 초기에는 로그인 버튼만 노출 -->
 <header class="topbar">
     <div class="topbar-inner">
+        <!-- 좌측 타이틀 -->
+        <div class="topbar-left">
+            <h1 class="topbar-title">Security <span class="sep">-</span> Starter</h1>
+        </div>
+
+        <!-- 우측 액션 영역 -->
         <div class="topbar-right">
             <sec:authorize access="isAuthenticated()">
-    <span class="welcome">
-        <sec:authentication property="name"/>님 환영합니다.
-    </span>
+                <span class="welcome">
+                    <sec:authentication property="name"/>님 환영합니다.
+                </span>
                 <button id="btnOpenChangePw" type="button" class="btn">비밀번호 변경</button>
                 <button id="btnLogout" type="button" class="btn">로그아웃</button>
             </sec:authorize>
@@ -58,20 +64,18 @@
                 사내 서비스에서 공통으로 사용하는 RSA 기반 통합 로그인 인증 서비스입니다.
             </p>
 
-            <div class="hero-readme">
-                <div class="hero-row">
-                    <span class="hero-tag">Login</span>
-                    <p class="hero-text">
-                        로그인 시 서버에서 RSA 공개키를 발급받고, 비밀번호를 암호화하여 Spring Security 로그인 필터(/security/loginProcess.do)로 전송합니다.
-                    </p>
-                </div>
+            <div class="hero-row hero-row--inline">
+                <span class="hero-tag">구현 항목</span>
 
-                <div class="hero-row">
-                    <span class="hero-tag">Signup</span>
-                    <p class="hero-text">
-                        회원가입은 아이디 중복확인 후, 동일하게 RSA로 비밀번호를 암호화하여 /security/signup.do 로 전송합니다.
-                    </p>
-                </div>
+                <ul class="feature-chips">
+                    <li>로그인 5회 실패 계정 잠금</li>
+                    <li>RSA 비밀번호 암호화</li>
+                    <li>ID 중복 확인</li>
+                    <li>지역 선택(읍·면·동 코드 저장)</li>
+                    <li>비밀번호 변경</li>
+                    <li>로그인/로그아웃 세션 로그 저장</li>
+                    <li>이름/전화번호 기반 아이디 찾기</li>
+                </ul>
             </div>
         </div>
     </section>
