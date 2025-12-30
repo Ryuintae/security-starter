@@ -2,7 +2,9 @@
 
 Spring 기반 프로젝트에서 **공통으로 재사용 가능한 로그인·회원가입 보안 인증 모듈**입니다.  
 RSA 암호화, 로그인 실패 제어, 세션 로그 관리 등 **실서비스에 바로 적용 가능한 인증 기능**을 포함합니다.
-<img width="1330" height="766" alt="image" src="https://github.com/user-attachments/assets/b4d7bba2-157b-4165-b0dd-5d242352a6fc" />
+---
+
+<img width="1106" height="593" alt="image" src="https://github.com/user-attachments/assets/60b2ef1f-57db-469e-bef8-20ced734152b" />
 
 ---
 
